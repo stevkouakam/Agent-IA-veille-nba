@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "version": 3,
+    "request": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
+    "time": "2026-01-15 19:00:00.0",
+    "code": 200
+  },
+  "scoreboard": {
+    "gameDate": "2026-01-15",
+    "leagueId": "00",
+    "leagueName": "National Basketball Association",
+    "games": [
+      {
+        "gameId": "0022500601",
+        "gameCode": "20260115/BOSNYK",
+        "gameStatus": 1,
+        "gameStatusText": "7:30 pm ET",
+        "period": 0,
+        "gameClock": "",
+        "gameTimeUTC": "2026-01-16T00:30:00Z",
+        "homeTeam": {
+          "teamId": 1610612752,
+          "teamName": "Knicks",
+          "teamCity": "New York",
+          "teamTricode": "NYK",
+          "wins": 24,
+          "losses": 16,
+          "score": 0
+        },
+        "awayTeam": {
+          "teamId": 1610612738,
+          "teamName": "Celtics",
+          "teamCity": "Boston",
+          "teamTricode": "BOS",
+          "wins": 28,
+          "losses": 12,
+          "score": 0
+        }
+      },
+      {
+        "gameId": "0022500602",
+        "gameCode": "20260115/MIALAL",
+        "gameStatus": 2,
+        "gameStatusText": "Q3 05:23",
+        "period": 3,
+        "gameClock": "PT05M23.00S",
+        "gameTimeUTC": "2026-01-15T23:00:00Z",
+        "homeTeam": {
+          "teamId": 1610612747,
+          "teamName": "Lakers",
+          "teamCity": "Los Angeles",
+          "teamTricode": "LAL",
+          "wins": 20,
+          "losses": 20,
+          "score": 88
+        },
+        "awayTeam": {
+          "teamId": 1610612748,
+          "teamName": "Heat",
+          "teamCity": "Miami",
+          "teamTricode": "MIA",
+          "wins": 18,
+          "losses": 22,
+          "score": 91
+        }
+      },
+      {
+        "gameId": "0022500603",
+        "gameCode": "20260115/DENGSW",
+        "gameStatus": 3,
+        "gameStatusText": "Final",
+        "period": 4,
+        "gameClock": "",
+        "gameTimeUTC": "2026-01-15T21:00:00Z",
+        "homeTeam": {
+          "teamId": 1610612744,
+          "teamName": "Warriors",
+          "teamCity": "Golden State",
+          "teamTricode": "GSW",
+          "wins": 22,
+          "losses": 18,
+          "score": 104
+        },
+        "awayTeam": {
+          "teamId": 1610612743,
+          "teamName": "Nuggets",
+          "teamCity": "Denver",
+          "teamTricode": "DEN",
+          "wins": 26,
+          "losses": 14,
+          "score": 110
+        }
+      }
+    ]
+  }
+}
