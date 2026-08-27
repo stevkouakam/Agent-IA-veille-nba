@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: nba-watch-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nba
+      POSTGRES_PASSWORD: nba
+      POSTGRES_DB: nba_watch
+    ports:
+      - "5432:5432"
+    volumes:
+      - nba-watch-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nba -d nba_watch"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nba-watch-db-data:

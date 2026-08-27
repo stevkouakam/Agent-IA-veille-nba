@@ -57,7 +57,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 
 - [x] **1. Project foundations** — Git conventions, package scaffolding, tooling (ruff/black/mypy/pre-commit)
 - [x] **2. `nba_api` exploration** — live scoreboard fetch/parse module, unit-tested against a fixture ([details](docs/nba_api_notes.md))
-- [ ] **3. Data model** — SQLAlchemy + Alembic schema for tracked games
+- [x] **3. Data model** — SQLAlchemy `games` table + Alembic migration, tested against a real Postgres (Docker)
 - [ ] **4. Detection agent** — the core LangGraph state graph
 - [ ] **5. API layer** — FastAPI endpoint with Swagger docs
 - [ ] **6. Telegram notifications** — with mocked integration tests
@@ -68,16 +68,19 @@ This project is under active, incremental development — each step is designed 
 
 ## Getting started
 
-Requires [uv](https://github.com/astral-sh/uv) and Python 3.13.
+Requires [uv](https://github.com/astral-sh/uv), Python 3.13, and Docker (for the local Postgres).
 
 ```powershell
 git clone https://github.com/stevkouakam/Agent-IA-veille-nba.git
 cd Agent-IA-veille-nba
 uv sync
 .venv\Scripts\Activate.ps1
+copy .env.example .env
+docker compose up -d db
+alembic upgrade head
 ```
 
-Run the test suite:
+Run the test suite (the `tests/db` tests need the Postgres container running; they skip themselves otherwise):
 
 ```powershell
 pytest
@@ -98,10 +101,12 @@ src/agent_ia_veille_nba/
 ├── nba_data/     # External data sources: fetch (I/O) + parse (pure functions)
 ├── agents/       # LangGraph state graph and agent nodes
 ├── api/          # FastAPI application
-└── db/           # SQLAlchemy models, Alembic migrations
+└── db/           # SQLAlchemy models, session, repository
+alembic/          # Migration environment and versioned schema changes
 tests/            # pytest suite, mirrors the src/ layout
 docs/             # design notes and API exploration write-ups
 scripts/          # one-off manual exploration/debugging scripts
+docker-compose.yml  # local Postgres for development
 ```
 
 ## Notes & learnings

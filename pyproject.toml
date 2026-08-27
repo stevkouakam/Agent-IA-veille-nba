@@ -13,6 +13,7 @@ dependencies = [
     "langgraph>=1.2.11",
     "nba-api>=1.11.4",
     "psycopg2-binary>=2.9.12",
+    "python-dotenv>=1.2.3",
     "python-telegram-bot>=22.8",
     "sqlalchemy>=2.0.52",
 ]
@@ -39,3 +40,8 @@ ignore_missing_imports = true
 
 [tool.black]
 target-version = ["py313"]
+
+[tool.ruff]
+# Alembic regenerates these from its own template on every migration;
+# they're not hand-written code and aren't worth linting/reformatting.
+extend-exclude = ["alembic/versions"]
