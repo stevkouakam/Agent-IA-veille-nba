@@ -1,4 +1,4 @@
-"""Fixtures for tests hitting the real (dockerized) Postgres.
+"""Shared fixtures for any test hitting the real (dockerized) Postgres.
 
 Each test runs inside a transaction that is rolled back afterwards, so
 tests never leave data behind or depend on execution order.

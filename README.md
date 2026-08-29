@@ -58,7 +58,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **1. Project foundations** — Git conventions, package scaffolding, tooling (ruff/black/mypy/pre-commit)
 - [x] **2. `nba_api` exploration** — live scoreboard fetch/parse module, unit-tested against a fixture ([details](docs/nba_api_notes.md))
 - [x] **3. Data model** — SQLAlchemy `games` table + Alembic migration, tested against a real Postgres (Docker)
-- [ ] **4. Detection agent** — the core LangGraph state graph
+- [x] **4. Detection agent** — LangGraph state graph (fetch → parse → detect → persist → route), notification channel still a stub
 - [ ] **5. API layer** — FastAPI endpoint with Swagger docs
 - [ ] **6. Telegram notifications** — with mocked integration tests
 - [ ] **7. Containerization & scheduling** — Docker + GitHub Actions
