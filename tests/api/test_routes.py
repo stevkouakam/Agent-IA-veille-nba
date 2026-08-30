@@ -92,6 +92,9 @@ def test_run_cycle_returns_detected_transitions(monkeypatch, seeded_previous_sta
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.fetch_scoreboard", lambda: raw
     )
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_telegram_message", lambda text: None
+    )
     monkeypatch.delenv("WATCHED_TEAMS", raising=False)
 
     client = TestClient(create_app())

@@ -5,9 +5,11 @@ from pathlib import Path
 from agent_ia_veille_nba.agents.nodes import (
     detect_changes,
     has_changes,
+    notify_node,
     parse_node,
     persist_games,
 )
+from agent_ia_veille_nba.agents.state import GameChange
 from agent_ia_veille_nba.db.repository import get_by_game_id, upsert_game
 from agent_ia_veille_nba.nba_data.scoreboard import (
     GameStatus,
@@ -132,3 +134,28 @@ def test_parse_node_filters_by_watched_teams(monkeypatch):
     result = parse_node({"raw_scoreboard": raw})
 
     assert [u.game_id for u in result["updates"]] == ["0022500602"]
+
+
+# --- notify_node --------------------------------------------------------
+
+
+def test_notify_node_sends_one_message_per_change(monkeypatch):
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_telegram_message", sent.append
+    )
+
+    change = GameChange(
+        game_id="0022500602",
+        home_team="LAL",
+        away_team="MIA",
+        previous_status=GameStatus.SCHEDULED,
+        new_status=GameStatus.LIVE,
+        home_score=0,
+        away_score=0,
+    )
+
+    notify_node({"changes": [change]})
+
+    assert len(sent) == 1
+    assert "MIA" in sent[0] and "LAL" in sent[0]

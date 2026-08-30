@@ -60,7 +60,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **3. Data model** — SQLAlchemy `games` table + Alembic migration, tested against a real Postgres (Docker)
 - [x] **4. Detection agent** — LangGraph state graph (fetch → parse → detect → persist → route), notification channel still a stub
 - [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`) with auto-generated Swagger docs
-- [ ] **6. Telegram notifications** — with mocked integration tests
+- [x] **6. Telegram notifications** — real send wired into `notify_node`, mocked in automated tests
 - [ ] **7. Containerization & scheduling** — Docker + GitHub Actions
 - [ ] **8. Portfolio polish** — architecture diagram, v1.0 release
 

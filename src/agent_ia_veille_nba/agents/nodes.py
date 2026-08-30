@@ -24,6 +24,10 @@ from agent_ia_veille_nba.nba_data.scoreboard import (
     fetch_scoreboard,
     parse_scoreboard,
 )
+from agent_ia_veille_nba.notifications.telegram import (
+    format_change_message,
+    send_telegram_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,20 +109,10 @@ def persist_node(state: PipelineState) -> dict:
 
 
 def notify_node(state: PipelineState) -> dict:
-    """Stub notification channel — logs for now.
-
-    The interface (reads `changes`, returns nothing) won't change once
-    step 6 wires this up to Telegram/email; only the body will.
-    """
     for change in state["changes"]:
-        logger.info(
-            "notify-worthy change: %s @ %s -> %s (%s-%s)",
-            change.away_team,
-            change.home_team,
-            change.new_status.name,
-            change.away_score,
-            change.home_score,
-        )
+        message = format_change_message(change)
+        logger.info("sending telegram notification: %s", message)
+        send_telegram_message(message)
     return {}
 
 
