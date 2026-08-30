@@ -19,6 +19,14 @@ def get_by_game_id(session: Session, game_id: str) -> Game | None:
     return session.scalar(select(Game).where(Game.game_id == game_id))
 
 
+def list_games(session: Session, game_date: dt.date | None = None) -> list[Game]:
+    """All known games, optionally filtered to a single date."""
+    stmt = select(Game).order_by(Game.game_date, Game.game_id)
+    if game_date is not None:
+        stmt = stmt.where(Game.game_date == game_date)
+    return list(session.scalars(stmt))
+
+
 def upsert_game(session: Session, update: GameUpdate, game_date: dt.date) -> Game:
     """Insert a new game row, or update the existing one in place."""
     game = get_by_game_id(session, update.game_id)

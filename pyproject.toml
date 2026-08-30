@@ -16,6 +16,7 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "python-telegram-bot>=22.8",
     "sqlalchemy>=2.0.52",
+    "uvicorn[standard]>=0.52.4",
 ]
 
 [project.scripts]
@@ -28,6 +29,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "black>=26.5.1",
+    "httpx2>=2.12.0",
     "mypy>=2.3.1",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
@@ -45,3 +47,8 @@ target-version = ["py313"]
 # Alembic regenerates these from its own template on every migration;
 # they're not hand-written code and aren't worth linting/reformatting.
 extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's `Depends(...)` in a default argument is the documented,
+# idiomatic pattern (not the mutable-default footgun B008 warns about).
+extend-immutable-calls = ["fastapi.Depends"]

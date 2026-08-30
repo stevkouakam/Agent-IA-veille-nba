@@ -59,7 +59,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **2. `nba_api` exploration** — live scoreboard fetch/parse module, unit-tested against a fixture ([details](docs/nba_api_notes.md))
 - [x] **3. Data model** — SQLAlchemy `games` table + Alembic migration, tested against a real Postgres (Docker)
 - [x] **4. Detection agent** — LangGraph state graph (fetch → parse → detect → persist → route), notification channel still a stub
-- [ ] **5. API layer** — FastAPI endpoint with Swagger docs
+- [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`) with auto-generated Swagger docs
 - [ ] **6. Telegram notifications** — with mocked integration tests
 - [ ] **7. Containerization & scheduling** — Docker + GitHub Actions
 - [ ] **8. Portfolio polish** — architecture diagram, v1.0 release
@@ -80,10 +80,16 @@ docker compose up -d db
 alembic upgrade head
 ```
 
-Run the test suite (the `tests/db` tests need the Postgres container running; they skip themselves otherwise):
+Run the test suite (DB-backed tests need the Postgres container running; they skip themselves otherwise):
 
 ```powershell
 pytest
+```
+
+Run the API locally, with interactive Swagger docs at `http://127.0.0.1:8000/docs`:
+
+```powershell
+uvicorn agent_ia_veille_nba.api.app:app --reload
 ```
 
 Run linting, formatting and type checks:
@@ -100,7 +106,7 @@ mypy src
 src/agent_ia_veille_nba/
 ├── nba_data/     # External data sources: fetch (I/O) + parse (pure functions)
 ├── agents/       # LangGraph state graph and agent nodes
-├── api/          # FastAPI application
+├── api/          # FastAPI app, routes, Pydantic schemas
 └── db/           # SQLAlchemy models, session, repository
 alembic/          # Migration environment and versioned schema changes
 tests/            # pytest suite, mirrors the src/ layout
