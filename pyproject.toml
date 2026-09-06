@@ -43,6 +43,8 @@ ignore_missing_imports = true
 
 [tool.black]
 target-version = ["py313"]
+# Same rationale as tool.ruff.extend-exclude below: generated, not hand-written.
+extend-exclude = "alembic/versions"
 
 [tool.ruff]
 # Alembic regenerates these from its own template on every migration;
