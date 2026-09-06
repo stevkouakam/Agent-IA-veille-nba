@@ -1,4 +1,23 @@
 services:
+  app:
+    build: .
+    container_name: nba-watch-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Overrides .env's localhost URL — inside the compose network the
+      # database is reachable at the service name, not localhost.
+      DATABASE_URL: postgresql+psycopg2://nba:nba@db:5432/nba_watch
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Applies migrations on every start — harmless when already at head,
+    # and means a fresh `docker compose up` just works.
+    command: sh -c "uv run alembic upgrade head && uv run uvicorn agent_ia_veille_nba.api.app:app --host 0.0.0.0 --port 8000"
+
   db:
     image: postgres:17-alpine
     container_name: nba-watch-db

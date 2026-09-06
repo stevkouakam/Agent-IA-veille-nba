@@ -1,0 +1,55 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: nba
+          POSTGRES_PASSWORD: nba
+          POSTGRES_DB: nba_watch
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nba -d nba_watch"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+psycopg2://nba:nba@localhost:5432/nba_watch
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Format check (black)
+        run: uv run black --check .
+
+      - name: Type check (mypy)
+        run: uv run mypy src
+
+      - name: Run tests
+        run: uv run pytest -v

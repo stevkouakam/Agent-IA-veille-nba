@@ -61,7 +61,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **4. Detection agent** — LangGraph state graph (fetch → parse → detect → persist → route), notification channel still a stub
 - [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`) with auto-generated Swagger docs
 - [x] **6. Telegram notifications** — real send wired into `notify_node`, mocked in automated tests
-- [ ] **7. Containerization & scheduling** — Docker + GitHub Actions
+- [x] **7. Containerization & CI** — app Dockerized, tests run in GitHub Actions on every push; scheduled pipeline execution pending an Akamai network check on hosted runners
 - [ ] **8. Portfolio polish** — architecture diagram, v1.0 release
 
 This project is under active, incremental development — each step is designed to ship independently, tested, and documented.
@@ -92,6 +92,12 @@ Run the API locally, with interactive Swagger docs at `http://127.0.0.1:8000/doc
 uvicorn agent_ia_veille_nba.api.app:app --reload
 ```
 
+Or run the whole app (API + Postgres) containerized:
+
+```powershell
+docker compose up -d --build
+```
+
 Run linting, formatting and type checks:
 
 ```powershell
@@ -99,6 +105,10 @@ ruff check .
 black --check .
 mypy src
 ```
+
+## CI
+
+Every push runs [`.github/workflows/tests.yml`](.github/workflows/tests.yml): lint, format check, type check and the full test suite against a real Postgres service container.
 
 ## Project structure
 
@@ -112,7 +122,9 @@ alembic/          # Migration environment and versioned schema changes
 tests/            # pytest suite, mirrors the src/ layout
 docs/             # design notes and API exploration write-ups
 scripts/          # one-off manual exploration/debugging scripts
-docker-compose.yml  # local Postgres for development
+.github/workflows/  # CI (tests.yml) + a one-off Akamai reachability check
+Dockerfile          # the app image
+docker-compose.yml  # app + Postgres, for local dev
 ```
 
 ## Notes & learnings

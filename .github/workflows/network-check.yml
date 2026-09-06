@@ -1,0 +1,27 @@
+# Diagnostic, triggered manually: checks whether GitHub's hosted runners
+# can reach cdn.nba.com, or get the same Akamai 403 seen from other cloud
+# IP ranges during local development (see docs/nba_api_notes.md). Run
+# this once from the Actions tab before building a scheduled workflow
+# that depends on this endpoint — delete it once the answer is known.
+name: NBA API network check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Try fetching the live scoreboard from cdn.nba.com
+        run: |
+          status=$(curl -s -o response.json -w "%{http_code}" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" \
+            https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json)
+          echo "HTTP status: $status"
+          echo "--- first 500 bytes of response ---"
+          head -c 500 response.json
+          echo ""
+          if [ "$status" != "200" ]; then
+            echo "::error::cdn.nba.com is not reachable from this runner (status $status)"
+            exit 1
+          fi
