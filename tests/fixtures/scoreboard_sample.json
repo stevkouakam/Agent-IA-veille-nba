@@ -1,96 +1,104 @@
 {
-  "meta": {
-    "version": 3,
-    "request": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
-    "time": "2026-01-15 19:00:00.0",
-    "code": 200
-  },
-  "scoreboard": {
-    "gameDate": "2026-01-15",
-    "leagueId": "00",
-    "leagueName": "National Basketball Association",
-    "games": [
-      {
-        "gameId": "0022500601",
-        "gameCode": "20260115/BOSNYK",
-        "gameStatus": 1,
-        "gameStatusText": "7:30 pm ET",
-        "period": 0,
-        "gameClock": "",
-        "gameTimeUTC": "2026-01-16T00:30:00Z",
-        "homeTeam": {
-          "teamId": 1610612752,
-          "teamName": "Knicks",
-          "teamCity": "New York",
-          "teamTricode": "NYK",
-          "wins": 24,
-          "losses": 16,
-          "score": 0
-        },
-        "awayTeam": {
-          "teamId": 1610612738,
-          "teamName": "Celtics",
-          "teamCity": "Boston",
-          "teamTricode": "BOS",
-          "wins": 28,
-          "losses": 12,
-          "score": 0
-        }
+  "data": [
+    {
+      "id": 15900601,
+      "date": "2026-01-15",
+      "season": 2025,
+      "status": "7:30 pm ET",
+      "status_state": "scheduled",
+      "period": 0,
+      "time": null,
+      "postseason": false,
+      "postponed": false,
+      "home_team_score": 0,
+      "visitor_team_score": 0,
+      "datetime": "2026-01-16T00:30:00.000Z",
+      "home_team": {
+        "id": 20,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "New York",
+        "name": "Knicks",
+        "full_name": "New York Knicks",
+        "abbreviation": "NYK"
       },
-      {
-        "gameId": "0022500602",
-        "gameCode": "20260115/MIALAL",
-        "gameStatus": 2,
-        "gameStatusText": "Q3 05:23",
-        "period": 3,
-        "gameClock": "PT05M23.00S",
-        "gameTimeUTC": "2026-01-15T23:00:00Z",
-        "homeTeam": {
-          "teamId": 1610612747,
-          "teamName": "Lakers",
-          "teamCity": "Los Angeles",
-          "teamTricode": "LAL",
-          "wins": 20,
-          "losses": 20,
-          "score": 88
-        },
-        "awayTeam": {
-          "teamId": 1610612748,
-          "teamName": "Heat",
-          "teamCity": "Miami",
-          "teamTricode": "MIA",
-          "wins": 18,
-          "losses": 22,
-          "score": 91
-        }
-      },
-      {
-        "gameId": "0022500603",
-        "gameCode": "20260115/DENGSW",
-        "gameStatus": 3,
-        "gameStatusText": "Final",
-        "period": 4,
-        "gameClock": "",
-        "gameTimeUTC": "2026-01-15T21:00:00Z",
-        "homeTeam": {
-          "teamId": 1610612744,
-          "teamName": "Warriors",
-          "teamCity": "Golden State",
-          "teamTricode": "GSW",
-          "wins": 22,
-          "losses": 18,
-          "score": 104
-        },
-        "awayTeam": {
-          "teamId": 1610612743,
-          "teamName": "Nuggets",
-          "teamCity": "Denver",
-          "teamTricode": "DEN",
-          "wins": 26,
-          "losses": 14,
-          "score": 110
-        }
+      "visitor_team": {
+        "id": 2,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "Boston",
+        "name": "Celtics",
+        "full_name": "Boston Celtics",
+        "abbreviation": "BOS"
       }
-    ]
+    },
+    {
+      "id": 15900602,
+      "date": "2026-01-15",
+      "season": 2025,
+      "status": "3rd Qtr",
+      "status_state": "in_progress",
+      "period": 3,
+      "time": "5:23",
+      "postseason": false,
+      "postponed": false,
+      "home_team_score": 88,
+      "visitor_team_score": 91,
+      "datetime": "2026-01-15T23:00:00.000Z",
+      "home_team": {
+        "id": 14,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "Los Angeles",
+        "name": "Lakers",
+        "full_name": "Los Angeles Lakers",
+        "abbreviation": "LAL"
+      },
+      "visitor_team": {
+        "id": 16,
+        "conference": "East",
+        "division": "Southeast",
+        "city": "Miami",
+        "name": "Heat",
+        "full_name": "Miami Heat",
+        "abbreviation": "MIA"
+      }
+    },
+    {
+      "id": 15900603,
+      "date": "2026-01-15",
+      "season": 2025,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "time": "Final",
+      "postseason": false,
+      "postponed": false,
+      "home_team_score": 104,
+      "visitor_team_score": 110,
+      "datetime": "2026-01-15T21:00:00.000Z",
+      "home_team": {
+        "id": 10,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "Golden State",
+        "name": "Warriors",
+        "full_name": "Golden State Warriors",
+        "abbreviation": "GSW"
+      },
+      "visitor_team": {
+        "id": 8,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Denver",
+        "name": "Nuggets",
+        "full_name": "Denver Nuggets",
+        "abbreviation": "DEN"
+      }
+    }
+  ],
+  "meta": {
+    "next_cursor": null,
+    "per_page": 25
   }
 }

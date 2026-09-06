@@ -15,7 +15,7 @@ from agent_ia_veille_nba.nba_data.scoreboard import GameStatus
 FIXTURE_PATH = (
     Path(__file__).resolve().parent.parent / "fixtures" / "scoreboard_sample.json"
 )
-LIVE_GAME_ID = "0022500602"  # must match FIXTURE_LIVE_GAME_ID in tests/conftest.py
+LIVE_GAME_ID = "15900602"  # must match FIXTURE_LIVE_GAME_ID in tests/conftest.py
 
 
 def test_graph_detects_the_scheduled_to_live_transition(
@@ -23,7 +23,7 @@ def test_graph_detects_the_scheduled_to_live_transition(
 ):
     raw = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     monkeypatch.setattr(
-        "agent_ia_veille_nba.agents.nodes.fetch_scoreboard", lambda: raw
+        "agent_ia_veille_nba.agents.nodes.fetch_scoreboard", lambda game_date: raw
     )
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.send_telegram_message", lambda text: None

@@ -21,7 +21,7 @@ The pipeline runs on a schedule via GitHub Actions (short interval for live scor
 
 ```mermaid
 flowchart LR
-    A["Live Scoreboard<br/>(nba_api)"] --> D["Classification Agent<br/>dedupe + tagging"]
+    A["Live Scoreboard<br/>(balldontlie.io)"] --> D["Classification Agent<br/>dedupe + tagging"]
     B["Trade Rumors<br/>(RSS feeds)"] --> D
     C["News & Scandals<br/>(RSS feeds)"] --> D
     D --> E["Verification Agent<br/>credibility score + summary"]
@@ -46,7 +46,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 | API layer              | FastAPI (auto-generated Swagger/OpenAPI)  |
 | Database                | PostgreSQL via SQLAlchemy (ORM) + Alembic (migrations) |
 | Notifications           | python-telegram-bot, Resend (email)       |
-| Data source              | [nba_api](https://github.com/swar/nba_api) (live scoreboard), RSS feeds (rumors/news) |
+| Data source              | [balldontlie.io](https://balldontlie.io) (live scoreboard), RSS feeds (rumors/news) |
 | Dependency management    | [uv](https://github.com/astral-sh/uv)     |
 | Code quality              | ruff, black, mypy, pre-commit             |
 | Testing                    | pytest (written alongside the code, not after) |
@@ -56,12 +56,12 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 ## Project status & roadmap
 
 - [x] **1. Project foundations** — Git conventions, package scaffolding, tooling (ruff/black/mypy/pre-commit)
-- [x] **2. `nba_api` exploration** — live scoreboard fetch/parse module, unit-tested against a fixture ([details](docs/nba_api_notes.md))
+- [x] **2. Live scoreboard fetch/parse** — fetch/parse module, unit-tested against a fixture; originally built on `nba_api` ([history](docs/nba_api_notes.md)), migrated to `balldontlie.io` in step 7 after confirming the former is Akamai-blocked from every network tested, including a residential one ([details](docs/balldontlie_setup.md))
 - [x] **3. Data model** — SQLAlchemy `games` table + Alembic migration, tested against a real Postgres (Docker)
 - [x] **4. Detection agent** — LangGraph state graph (fetch → parse → detect → persist → route), notification channel still a stub
 - [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`) with auto-generated Swagger docs
 - [x] **6. Telegram notifications** — real send wired into `notify_node`, mocked in automated tests
-- [x] **7. Containerization & CI** — app Dockerized, tests run in GitHub Actions on every push; scheduled pipeline execution pending an Akamai network check on hosted runners
+- [x] **7. Containerization & CI** — app Dockerized, tests run in GitHub Actions on every push; the live data source moved from `nba_api` to `balldontlie.io` after confirming Akamai blocks the former everywhere, hosted runners included
 - [ ] **8. Portfolio polish** — architecture diagram, v1.0 release
 
 This project is under active, incremental development — each step is designed to ship independently, tested, and documented.
@@ -129,7 +129,7 @@ docker-compose.yml  # app + Postgres, for local dev
 
 ## Notes & learnings
 
-Engineering notes worth reading are kept in [`docs/`](docs/) as they come up — e.g. [`nba_api_notes.md`](docs/nba_api_notes.md) documents the live scoreboard's JSON schema and a CDN-level access restriction found while testing the fetch from a cloud environment, which will need to be accounted for once the pipeline moves to scheduled GitHub Actions runs.
+Engineering notes worth reading are kept in [`docs/`](docs/) as they come up — e.g. [`nba_api_notes.md`](docs/nba_api_notes.md) documents why the project moved off `nba_api` (an Akamai-level block confirmed on every network tested, cloud and residential alike) and [`balldontlie_setup.md`](docs/balldontlie_setup.md) documents its replacement.
 
 ## Author
 

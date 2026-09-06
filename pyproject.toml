@@ -11,12 +11,12 @@ dependencies = [
     "alembic>=1.19.1",
     "fastapi>=0.141.1",
     "langgraph>=1.2.11",
-    "nba-api>=1.11.4",
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.3",
     "python-telegram-bot>=22.8",
     "requests>=2.34.2",
     "sqlalchemy>=2.0.52",
+    "tzdata>=2026.3",
     "uvicorn[standard]>=0.52.4",
 ]
 
@@ -36,10 +36,6 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.4",
 ]
-
-[[tool.mypy.overrides]]
-module = "nba_api.*"
-ignore_missing_imports = true
 
 [tool.black]
 target-version = ["py313"]

@@ -24,7 +24,7 @@ def test_parse_scoreboard_extracts_scheduled_game(raw_scoreboard):
     games = parse_scoreboard(raw_scoreboard)
     scheduled = games[0]
 
-    assert scheduled.game_id == "0022500601"
+    assert scheduled.game_id == "15900601"
     assert scheduled.home_team == "NYK"
     assert scheduled.away_team == "BOS"
     assert scheduled.home_score == 0
@@ -42,7 +42,7 @@ def test_parse_scoreboard_extracts_live_game(raw_scoreboard):
     assert live.home_score == 88
     assert live.away_score == 91
     assert live.period == 3
-    assert live.status_text == "Q3 05:23"
+    assert live.status_text == "3rd Qtr"
 
 
 def test_parse_scoreboard_extracts_final_game(raw_scoreboard):
@@ -56,4 +56,23 @@ def test_parse_scoreboard_extracts_final_game(raw_scoreboard):
 
 
 def test_parse_scoreboard_handles_no_games():
-    assert parse_scoreboard({"scoreboard": {"games": []}}) == []
+    assert parse_scoreboard({"data": []}) == []
+
+
+def test_parse_scoreboard_skips_games_with_unmapped_status():
+    raw = {
+        "data": [
+            {
+                "id": 1,
+                "status": "Postponed",
+                "status_state": "postponed",
+                "period": 0,
+                "time": None,
+                "home_team_score": 0,
+                "visitor_team_score": 0,
+                "home_team": {"abbreviation": "NYK"},
+                "visitor_team": {"abbreviation": "BOS"},
+            }
+        ]
+    }
+    assert parse_scoreboard(raw) == []

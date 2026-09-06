@@ -117,13 +117,12 @@ def test_fixture_scoreboard_still_parses_into_three_updates():
 # --- parse_node -------------------------------------------------------------
 
 
-def test_parse_node_extracts_game_date_and_all_updates_when_unfiltered(monkeypatch):
+def test_parse_node_returns_all_updates_when_unfiltered(monkeypatch):
     monkeypatch.delenv("WATCHED_TEAMS", raising=False)
     raw = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
 
     result = parse_node({"raw_scoreboard": raw})
 
-    assert result["game_date"] == dt.date(2026, 1, 15)
     assert len(result["updates"]) == 3
 
 
@@ -133,7 +132,7 @@ def test_parse_node_filters_by_watched_teams(monkeypatch):
 
     result = parse_node({"raw_scoreboard": raw})
 
-    assert [u.game_id for u in result["updates"]] == ["0022500602"]
+    assert [u.game_id for u in result["updates"]] == ["15900602"]
 
 
 # --- notify_node --------------------------------------------------------

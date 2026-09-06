@@ -1,6 +1,13 @@
-# Notes — endpoint scoreboard de nba_api
+# Notes — endpoint scoreboard de nba_api (historique)
 
-## Endpoint utilisé
+> **Superseded.** Ce document garde la trace de l'investigation initiale
+> et du choix technique qui en a découlé. Le blocage réseau décrit plus
+> bas s'est avéré permanent et plus large que prévu (voir la dernière
+> section) — le projet utilise désormais `balldontlie.io`, documenté dans
+> [`balldontlie_setup.md`](balldontlie_setup.md). Les sections ci-dessous
+> ne reflètent plus le code actuel de `nba_data/scoreboard.py`.
+
+## Endpoint utilisé (abandonné)
 
 `nba_api.live.nba.endpoints.scoreboard.ScoreBoard` — wrapper autour de
 `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json`.
@@ -66,24 +73,29 @@ Cette séparation garde les tests rapides et déterministes, et permettra
 plus tard de brancher `parse_scoreboard` sur le state graph LangGraph sans
 que l'agent ne connaisse les détails HTTP.
 
-## ⚠️ Blocage réseau observé (Akamai 403)
+## ⚠️ Blocage réseau — confirmé permanent et généralisé (étape 7)
 
 Tenter `fetch_scoreboard()` (ou un `requests.get()` direct sur
-`cdn.nba.com`) depuis l'environnement d'exécution de Claude Code a renvoyé
-un `403 Access Denied` de l'edge Akamai de nba.com — pas une erreur
-nba_api, un rejet réseau au niveau CDN. C'est un problème documenté dans la
-communauté nba_api : Akamai bloque fréquemment les IP de datacenter/cloud
-(AWS, GCP, Azure), probablement y compris certains runners GitHub Actions.
+`cdn.nba.com`) a systématiquement renvoyé un `403 Access Denied` de
+l'edge Akamai de nba.com — pas une erreur nba_api, un rejet réseau au
+niveau CDN. À l'étape 7, ce point a été vérifié dans les trois
+environnements possibles :
 
-**À vérifier :**
-- [ ] Confirmer que `fetch_scoreboard()` fonctionne depuis ton terminal
-      PowerShell habituel (IP résidentielle) — probable que oui.
-- [ ] Garder ce point en tête pour l'étape 7 (scheduling GitHub Actions) :
-      si les runners hébergés se font aussi bloquer, il faudra un runner
-      self-hosted ou un proxy.
+| Environnement | Résultat |
+|---|---|
+| Sandbox de développement (Claude Code) | `403` |
+| Conteneur Docker (même machine) | `403` (même trace, via `nba_api`) |
+| Runner GitHub Actions hébergé | `403` (voir `.github/workflows/network-check.yml`) |
+| **Terminal PowerShell perso, réseau résidentiel** | **`403` aussi** |
 
-## Prochaine étape suggérée
+Le dernier résultat a tranché : ce n'est pas un blocage d'IP de
+datacenter/cloud (l'hypothèse initiale, documentée dans la communauté
+nba_api pour AWS/GCP/Azure) — c'est plus large, probablement géographique
+ou lié à une politique anti-bot d'Akamai qui dépasse le cadre de ce
+projet. `stats.nba.com` (l'autre domaine de nba_api) ne renvoie même pas
+de 403 propre : la connexion TLS s'établit puis reste bloquée jusqu'au
+timeout, signe d'un filtrage similaire.
 
-Étape 3 du plan de match : modéliser la table des matchs suivis avec
-SQLAlchemy + Alembic, en s'appuyant sur les champs de `GameUpdate` comme
-première ébauche de schéma.
+**Décision :** migration vers `balldontlie.io`, qui n'est pas affecté et
+dont l'offre gratuite couvre le score en direct. Voir
+[`balldontlie_setup.md`](balldontlie_setup.md).

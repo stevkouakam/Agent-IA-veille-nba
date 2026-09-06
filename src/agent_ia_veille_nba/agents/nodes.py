@@ -23,6 +23,7 @@ from agent_ia_veille_nba.nba_data.scoreboard import (
     GameUpdate,
     fetch_scoreboard,
     parse_scoreboard,
+    today_in_nba_time,
 )
 from agent_ia_veille_nba.notifications.telegram import (
     format_change_message,
@@ -41,13 +42,14 @@ NOTIFIABLE_TRANSITIONS = {
 
 
 def fetch_scoreboard_node(state: PipelineState) -> dict:
-    return {"raw_scoreboard": fetch_scoreboard()}
+    # We control the date we ask for, so it's simpler to record it here
+    # than to dig it back out of the response in parse_node.
+    game_date = today_in_nba_time()
+    return {"raw_scoreboard": fetch_scoreboard(game_date), "game_date": game_date}
 
 
 def parse_node(state: PipelineState) -> dict:
-    raw = state["raw_scoreboard"]
-    game_date = dt.date.fromisoformat(raw["scoreboard"]["gameDate"])
-    updates = parse_scoreboard(raw)
+    updates = parse_scoreboard(state["raw_scoreboard"])
 
     watched = get_watched_teams()
     if watched is not None:
@@ -57,7 +59,7 @@ def parse_node(state: PipelineState) -> dict:
             if update.home_team in watched or update.away_team in watched
         ]
 
-    return {"game_date": game_date, "updates": updates}
+    return {"updates": updates}
 
 
 def detect_changes(session: Session, updates: list[GameUpdate]) -> list[GameChange]:

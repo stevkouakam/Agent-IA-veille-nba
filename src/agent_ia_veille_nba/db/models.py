@@ -12,7 +12,7 @@ from agent_ia_veille_nba.nba_data.scoreboard import GameStatus
 
 
 class Game(Base):
-    """Latest known state of one NBA game, keyed by nba_api's gameId.
+    """Latest known state of one NBA game, keyed by balldontlie's game id.
 
     Each pipeline cycle upserts one row per game in today's scoreboard.
     `updated_at` marks the last time this row was refreshed, and is what

@@ -20,8 +20,8 @@ from agent_ia_veille_nba.db.session import engine, get_session
 from agent_ia_veille_nba.nba_data.scoreboard import GameStatus, GameUpdate
 
 # Game ids present in tests/fixtures/scoreboard_sample.json.
-FIXTURE_GAME_IDS = ("0022500601", "0022500602", "0022500603")
-FIXTURE_LIVE_GAME_ID = "0022500602"  # LAL vs MIA, gameStatus=2 (LIVE) in the fixture
+FIXTURE_GAME_IDS = ("15900601", "15900602", "15900603")
+FIXTURE_LIVE_GAME_ID = "15900602"  # LAL vs MIA, status_state=in_progress in the fixture
 FIXTURE_GAME_DATE = dt.date(2026, 1, 15)
 
 
