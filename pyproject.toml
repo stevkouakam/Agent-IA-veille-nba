@@ -1,7 +1,7 @@
 [project]
 name = "agent-ia-veille-nba"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "Multi-agent LangGraph pipeline that watches NBA live scores and RSS news, classifies and routes what's new, and notifies via Telegram or an email digest."
 readme = "README.md"
 authors = [
     { name = "stevkouakam", email = "144498156+stevkouakam@users.noreply.github.com" }

@@ -1,7 +1,7 @@
 # 🏀 NBA Watch — Multi-Agent Monitoring System
 
 ![Python](https://img.shields.io/badge/python-3.13-blue)
-![Status](https://img.shields.io/badge/status-in%20development-yellow)
+![Status](https://img.shields.io/badge/status-v1.0-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-pytest-0A9EDC)
 
 A multi-agent system that continuously monitors official NBA sources — live scores, trade rumors, news and scandals — filters and verifies each piece of information, and notifies you through Telegram (instant) or email (urgent alerts + digest).
@@ -17,25 +17,27 @@ Two goals drove the design:
 
 ## How it works
 
-The pipeline runs on a schedule via GitHub Actions (short interval for live scores, longer for rumors/news). Each cycle:
+The pipeline runs on a schedule via GitHub Actions (every 15 minutes — see [Scheduled pipeline](#scheduled-pipeline)). Each cycle runs two branches in parallel, which converge before routing:
 
 ```mermaid
 flowchart LR
-    A["Live Scoreboard<br/>(balldontlie.io)"] --> D["Classification Agent<br/>dedupe + tagging"]
-    B["Trade Rumors<br/>(RSS feeds)"] --> D
-    C["News & Scandals<br/>(RSS feeds)"] --> D
-    D --> E["Verification Agent<br/>credibility score + summary"]
-    E --> F["Routing Agent<br/>urgency decision"]
-    F --> G["Telegram<br/>(instant)"]
-    F --> H["Email digest<br/>(urgent + daily)"]
+    A["Live Scoreboard<br/>(balldontlie.io)"] --> B["Detect status<br/>transitions"]
+    B --> P1["Persist<br/>(games)"]
+
+    C["RSS feeds<br/>ESPN · CBS · ClutchPoints<br/>· Sportando"] --> D["Classify<br/>category · teams · credibility"]
+    D --> E["Detect new<br/>headlines"]
+    E --> P2["Persist<br/>(headlines)"]
+
+    P1 --> R{"Route by<br/>urgency"}
+    P2 --> R
+    R -->|"game changes +<br/>high-confidence<br/>trade/injury"| T["Telegram<br/>(instant)"]
+    R -->|"everything else"| M["Email digest<br/>(Resend)"]
 ```
 
-1. Watcher agents collect updates from their respective sources.
-2. A classification agent deduplicates items and tags them (team, player, category).
-3. A verification agent scores rumor reliability by cross-referencing sources and produces a natural-language summary.
-4. A routing agent decides urgency and picks the notification channel.
-
-For the MVP, these roles are merged into a single LangGraph agent before being split into specialized nodes.
+1. **Watcher nodes** (`fetch_scoreboard`, `fetch_headlines`) collect updates from their respective sources — one API call, one RSS pull per configured feed.
+2. **Detection nodes** compare each update against the last known state in Postgres and keep only what's actually new: a game status transition worth waking someone up for (`detect_changes`), or a headline never seen before (`detect_new_headlines`).
+3. The **classification step** (`classify_headlines`, [`agents/classification.py`](src/agent_ia_veille_nba/agents/classification.py)) tags each headline with a category, the teams it mentions, and a credibility score — a keyword/heuristic pass, not a fact-check.
+4. The **routing step** (inside `notify_node`, [`agents/routing.py`](src/agent_ia_veille_nba/agents/routing.py)) decides urgency: game changes and high-confidence trade/injury headlines go to Telegram instantly; everything else batches into one Resend email digest per cycle.
 
 ## Tech stack
 
@@ -66,9 +68,9 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **7.6. Trade rumors & news (RSS)** — a second graph branch (`fetch_headlines → parse_headlines → classify_headlines → detect_new_headlines → persist_headlines`) pulls from ESPN, CBS Sports, ClutchPoints and Sportando, dedupes against the `headlines` table, and notifies on anything new; runs in parallel with the scoreboard branch, both converging before routing.
 - [x] **8. Classification & verification agents** — [`agents/classification.py`](src/agent_ia_veille_nba/agents/classification.py) tags each headline with a category (trade/injury/signing/general, keyword-based) and the teams it mentions (name/city matching), and scores credibility from static per-source reliability plus a same-cycle cross-source corroboration bonus. Explicitly a heuristic, not a fact-check — an LLM-based pass would replace this with something more precise.
 - [x] **9. Routing agent + email digests** — [`agents/routing.py`](src/agent_ia_veille_nba/agents/routing.py) sends high-confidence trade/injury headlines to Telegram instantly and batches everything else (signings, general news, lower-credibility items) into a single Resend email digest per cycle; game status transitions stay Telegram-only, since `NOTIFIABLE_TRANSITIONS` already means "worth an instant ping." One digest email per cycle rather than a true daily digest — batching across cycles would need a persistent queue and its own schedule, deferred until it's actually needed.
-- [ ] **10. Portfolio polish** — architecture diagram, v1.0 release
+- [x] **10. Portfolio polish** — architecture diagram updated to match the shipped pipeline, v1.0 release
 
-This project is under active, incremental development — each step is designed to ship independently, tested, and documented.
+The pipeline described above is fully implemented end to end: both source branches, classification, urgency-based routing, and delivery on both channels. Each step shipped independently, tested, and documented as it landed — see the commit history for the incremental path from step 1 to here. Ideas for what's next: an LLM-based classification/verification pass (replacing the keyword heuristic), true daily digests (batching across cycles instead of per-cycle), and extending beyond the NBA via balldontlie.io's other sports.
 
 ## Getting started
 
