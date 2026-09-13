@@ -2,6 +2,10 @@ import datetime as dt
 import json
 from pathlib import Path
 
+from agent_ia_veille_nba.agents.classification import (
+    ClassifiedHeadline,
+    HeadlineCategory,
+)
 from agent_ia_veille_nba.agents.nodes import (
     detect_changes,
     detect_new_headlines,
@@ -57,6 +61,21 @@ def make_headline(**overrides: object) -> HeadlineUpdate:
     }
     defaults.update(overrides)
     return HeadlineUpdate(**defaults)
+
+
+def make_classified_headline(
+    *,
+    headline: HeadlineUpdate | None = None,
+    category: HeadlineCategory = HeadlineCategory.GENERAL,
+    teams: tuple[str, ...] = (),
+    credibility_score: float = 0.5,
+) -> ClassifiedHeadline:
+    return ClassifiedHeadline(
+        headline=headline or make_headline(),
+        category=category,
+        teams=teams,
+        credibility_score=credibility_score,
+    )
 
 
 # --- detect_changes -----------------------------------------------------
@@ -119,26 +138,38 @@ def test_persist_games_upserts_every_update(db_session):
 
 
 def test_detect_new_headlines_flags_a_headline_never_seen_before(db_session):
-    changes = detect_new_headlines(db_session, [make_headline()])
-    assert [h.headline_id for h in changes] == ["abc123"]
+    changes = detect_new_headlines(db_session, [make_classified_headline()])
+    assert [c.headline.headline_id for c in changes] == ["abc123"]
 
 
 def test_detect_new_headlines_ignores_a_headline_already_persisted(db_session):
-    persist_new_headlines(db_session, [make_headline()])
+    persist_new_headlines(db_session, [make_classified_headline()])
     db_session.flush()
 
-    changes = detect_new_headlines(db_session, [make_headline()])
+    changes = detect_new_headlines(db_session, [make_classified_headline()])
 
     assert changes == []
 
 
 def test_persist_new_headlines_inserts_every_headline(db_session):
-    persist_new_headlines(db_session, [make_headline()])
+    persist_new_headlines(
+        db_session,
+        [
+            make_classified_headline(
+                category=HeadlineCategory.TRADE,
+                teams=("BOS",),
+                credibility_score=0.9,
+            )
+        ],
+    )
     db_session.flush()
 
     saved = get_by_headline_id(db_session, "abc123")
     assert saved is not None
     assert saved.title == "Team A exploring trade for star guard"
+    assert saved.category == "trade"
+    assert saved.teams == ["BOS"]
+    assert saved.credibility_score == 0.9
 
 
 # --- has_changes ------------------------------------------------------------
@@ -216,7 +247,7 @@ def test_notify_node_sends_one_message_per_new_headline(monkeypatch):
         "agent_ia_veille_nba.agents.nodes.send_telegram_message", sent.append
     )
 
-    notify_node({"changes": [], "new_headlines": [make_headline()]})
+    notify_node({"changes": [], "new_headlines": [make_classified_headline()]})
 
     assert len(sent) == 1
     assert "Team A exploring trade for star guard" in sent[0]

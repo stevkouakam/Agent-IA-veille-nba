@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import Date, DateTime, Enum, Integer, String, Text, func
+from sqlalchemy import Date, DateTime, Enum, Float, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from agent_ia_veille_nba.db.base import Base
@@ -69,6 +70,10 @@ class Headline(Base):
     published_at: Mapped[dt.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    category: Mapped[str] = mapped_column(String(20), default="general")
+    teams: Mapped[list[str]] = mapped_column(ARRAY(String(3)), default=list)
+    credibility_score: Mapped[float] = mapped_column(Float, default=0.5)
 
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

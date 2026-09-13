@@ -14,6 +14,10 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from agent_ia_veille_nba.agents.classification import (
+    ClassifiedHeadline,
+    classify_headlines,
+)
 from agent_ia_veille_nba.agents.state import GameChange, PipelineState
 from agent_ia_veille_nba.config import get_watched_teams
 from agent_ia_veille_nba.db.repository import (
@@ -23,11 +27,7 @@ from agent_ia_veille_nba.db.repository import (
     upsert_game,
 )
 from agent_ia_veille_nba.db.session import get_session
-from agent_ia_veille_nba.nba_data.headlines import (
-    HeadlineUpdate,
-    fetch_all_feeds,
-    parse_feeds,
-)
+from agent_ia_veille_nba.nba_data.headlines import fetch_all_feeds, parse_feeds
 from agent_ia_veille_nba.nba_data.scoreboard import (
     GameStatus,
     GameUpdate,
@@ -129,24 +129,50 @@ def parse_headlines_node(state: PipelineState) -> dict:
     return {"headlines": parse_feeds(state["raw_headlines"])}
 
 
+def classify_headlines_node(state: PipelineState) -> dict:
+    classified = classify_headlines(state["headlines"])
+
+    # Same filtering intent as parse_node's WATCHED_TEAMS check, applied
+    # post-classification since teams aren't known until then. A
+    # headline mentioning no team at all (general NBA news) still gets
+    # through — only ones tied exclusively to unwatched teams are cut.
+    watched = get_watched_teams()
+    if watched is not None:
+        classified = [c for c in classified if not c.teams or set(c.teams) & watched]
+
+    return {"classified_headlines": classified}
+
+
 def detect_new_headlines(
-    session: Session, headlines: list[HeadlineUpdate]
-) -> list[HeadlineUpdate]:
+    session: Session, headlines: list[ClassifiedHeadline]
+) -> list[ClassifiedHeadline]:
     """Which of these headlines haven't been seen in a previous cycle —
     the piece worth unit testing directly, same rationale as
     `detect_changes`."""
-    return [h for h in headlines if get_by_headline_id(session, h.headline_id) is None]
+    return [
+        c
+        for c in headlines
+        if get_by_headline_id(session, c.headline.headline_id) is None
+    ]
 
 
-def persist_new_headlines(session: Session, headlines: list[HeadlineUpdate]) -> None:
-    for headline in headlines:
-        insert_headline(session, headline)
+def persist_new_headlines(
+    session: Session, headlines: list[ClassifiedHeadline]
+) -> None:
+    for classified in headlines:
+        insert_headline(
+            session,
+            classified.headline,
+            category=classified.category.value,
+            teams=list(classified.teams),
+            credibility_score=classified.credibility_score,
+        )
 
 
 def detect_new_headlines_node(state: PipelineState) -> dict:
     session = get_session()
     try:
-        new_headlines = detect_new_headlines(session, state["headlines"])
+        new_headlines = detect_new_headlines(session, state["classified_headlines"])
     finally:
         session.close()
     return {"new_headlines": new_headlines}

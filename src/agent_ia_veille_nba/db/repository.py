@@ -56,9 +56,22 @@ def list_headlines(session: Session) -> list[Headline]:
     return list(session.scalars(stmt))
 
 
-def insert_headline(session: Session, update: HeadlineUpdate) -> Headline:
+def insert_headline(
+    session: Session,
+    update: HeadlineUpdate,
+    *,
+    category: str = "general",
+    teams: list[str] | None = None,
+    credibility_score: float = 0.5,
+) -> Headline:
     """Insert a new headline row. Caller is responsible for having
-    already checked it's actually new (see detect_new_headlines)."""
+    already checked it's actually new (see detect_new_headlines).
+
+    `category`/`teams`/`credibility_score` are the classification
+    agent's output (agents/classification.py) — kept as plain
+    parameters here rather than importing that module, so this data
+    layer doesn't have to know about the agent layer built on top of it.
+    """
     headline = Headline(
         headline_id=update.headline_id,
         source=update.source,
@@ -66,6 +79,9 @@ def insert_headline(session: Session, update: HeadlineUpdate) -> Headline:
         link=update.link,
         summary=update.summary,
         published_at=update.published_at,
+        category=category,
+        teams=teams or [],
+        credibility_score=credibility_score,
     )
     session.add(headline)
     return headline

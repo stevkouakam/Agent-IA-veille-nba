@@ -78,6 +78,9 @@ class HeadlineOut(BaseModel):
     link: str
     summary: str
     published_at: dt.datetime | None
+    category: str
+    teams: list[str]
+    credibility_score: float
     created_at: dt.datetime
 
     @classmethod
@@ -88,6 +91,9 @@ class HeadlineOut(BaseModel):
             link=headline.link,
             summary=headline.summary,
             published_at=headline.published_at,
+            category=headline.category,
+            teams=headline.teams,
+            credibility_score=headline.credibility_score,
             created_at=headline.created_at,
         )
 

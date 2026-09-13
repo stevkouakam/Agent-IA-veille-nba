@@ -1,9 +1,9 @@
 """Assembles the detection pipeline as a LangGraph state graph.
 
-    fetch_scoreboard -> parse -> detect_changes -> persist -------+
-                                                                   |
-    fetch_headlines -> parse_headlines -> detect_new_headlines    +-> join_branches -+-> notify -> END
-                     -> persist_headlines ----------------------- +                 +---------> END
+    fetch_scoreboard -> parse -> detect_changes -> persist ---------------------------+
+                                                                                       |
+    fetch_headlines -> parse_headlines -> classify_headlines -> detect_new_headlines  +-> join_branches -+-> notify -> END
+                     -> persist_headlines ------------------------------------------- +                 +---------> END
 
 The scoreboard and headlines branches run in parallel (both start from
 START) and converge at `join_branches` before the conditional routing
@@ -17,6 +17,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from agent_ia_veille_nba.agents.nodes import (
+    classify_headlines_node,
     detect_changes_node,
     detect_new_headlines_node,
     fetch_headlines_node,
@@ -42,6 +43,7 @@ def build_graph() -> CompiledStateGraph:
 
     graph.add_node("fetch_headlines", fetch_headlines_node)
     graph.add_node("parse_headlines", parse_headlines_node)
+    graph.add_node("classify_headlines", classify_headlines_node)
     graph.add_node("detect_new_headlines", detect_new_headlines_node)
     graph.add_node("persist_headlines", persist_headlines_node)
 
@@ -56,7 +58,8 @@ def build_graph() -> CompiledStateGraph:
 
     graph.add_edge(START, "fetch_headlines")
     graph.add_edge("fetch_headlines", "parse_headlines")
-    graph.add_edge("parse_headlines", "detect_new_headlines")
+    graph.add_edge("parse_headlines", "classify_headlines")
+    graph.add_edge("classify_headlines", "detect_new_headlines")
     graph.add_edge("detect_new_headlines", "persist_headlines")
     graph.add_edge("persist_headlines", "join_branches")
 

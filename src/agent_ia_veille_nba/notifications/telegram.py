@@ -13,8 +13,8 @@ import os
 from dotenv import load_dotenv
 from telegram import Bot
 
+from agent_ia_veille_nba.agents.classification import ClassifiedHeadline
 from agent_ia_veille_nba.agents.state import GameChange
-from agent_ia_veille_nba.nba_data.headlines import HeadlineUpdate
 from agent_ia_veille_nba.nba_data.scoreboard import GameStatus
 
 # Load here rather than relying on some other module (e.g. db.session)
@@ -36,8 +36,14 @@ def format_change_message(change: GameChange) -> str:
     )
 
 
-def format_headline_message(headline: HeadlineUpdate) -> str:
-    return f"📰 [{headline.source}] {headline.title}\n{headline.link}"
+def format_headline_message(classified: ClassifiedHeadline) -> str:
+    headline = classified.headline
+    teams = f" ({', '.join(classified.teams)})" if classified.teams else ""
+    return (
+        f"📰 [{headline.source}] {classified.category.value.upper()}{teams} "
+        f"· credibility {classified.credibility_score:.0%}\n"
+        f"{headline.title}\n{headline.link}"
+    )
 
 
 def send_telegram_message(text: str) -> None:

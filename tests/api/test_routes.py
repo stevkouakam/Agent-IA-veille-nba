@@ -99,6 +99,9 @@ def test_get_headlines_returns_seeded_rows(client, db_session):
             summary="Sources say discussions are in early stages.",
             published_at=None,
         ),
+        category="trade",
+        teams=["BOS"],
+        credibility_score=0.9,
     )
     db_session.flush()
 
@@ -108,6 +111,9 @@ def test_get_headlines_returns_seeded_rows(client, db_session):
     body = response.json()
     assert len(body) == 1
     assert body[0]["title"] == "Team A exploring trade for star guard"
+    assert body[0]["category"] == "trade"
+    assert body[0]["teams"] == ["BOS"]
+    assert body[0]["credibility_score"] == 0.9
 
 
 def test_run_cycle_returns_detected_transitions(monkeypatch, seeded_previous_state):

@@ -6,6 +6,7 @@ import datetime as dt
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
+from agent_ia_veille_nba.agents.classification import ClassifiedHeadline
 from agent_ia_veille_nba.nba_data.headlines import HeadlineUpdate
 from agent_ia_veille_nba.nba_data.scoreboard import GameStatus, GameUpdate
 
@@ -37,4 +38,5 @@ class PipelineState(TypedDict, total=False):
 
     raw_headlines: dict[str, bytes]
     headlines: list[HeadlineUpdate]
-    new_headlines: list[HeadlineUpdate]
+    classified_headlines: list[ClassifiedHeadline]
+    new_headlines: list[ClassifiedHeadline]
