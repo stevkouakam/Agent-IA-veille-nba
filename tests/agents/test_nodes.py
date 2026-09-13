@@ -241,13 +241,39 @@ def test_notify_node_sends_one_message_per_change(monkeypatch):
     assert "MIA" in sent[0] and "LAL" in sent[0]
 
 
-def test_notify_node_sends_one_message_per_new_headline(monkeypatch):
+def test_notify_node_sends_urgent_headline_via_telegram(monkeypatch):
     sent: list[str] = []
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.send_telegram_message", sent.append
     )
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_digest_email",
+        lambda headlines: (_ for _ in ()).throw(AssertionError("should not digest")),
+    )
 
-    notify_node({"changes": [], "new_headlines": [make_classified_headline()]})
+    urgent = make_classified_headline(
+        category=HeadlineCategory.TRADE, credibility_score=0.9
+    )
+
+    notify_node({"changes": [], "new_headlines": [urgent]})
 
     assert len(sent) == 1
     assert "Team A exploring trade for star guard" in sent[0]
+
+
+def test_notify_node_sends_non_urgent_headline_via_digest_email(monkeypatch):
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_telegram_message",
+        lambda text: (_ for _ in ()).throw(AssertionError("should not telegram")),
+    )
+    digested: list[list] = []
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_digest_email", digested.append
+    )
+
+    general = make_classified_headline(category=HeadlineCategory.GENERAL)
+
+    notify_node({"changes": [], "new_headlines": [general]})
+
+    assert len(digested) == 1
+    assert digested[0] == [general]

@@ -23,6 +23,9 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      DIGEST_EMAIL_TO: ${{ secrets.DIGEST_EMAIL_TO }}
+      RESEND_FROM_EMAIL: ${{ vars.RESEND_FROM_EMAIL }}
       WATCHED_TEAMS: ${{ vars.WATCHED_TEAMS }}
 
     steps:

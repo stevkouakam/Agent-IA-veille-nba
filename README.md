@@ -65,7 +65,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **7.5. Scheduled pipeline** — [`scheduled-run.yml`](.github/workflows/scheduled-run.yml) runs a cycle every 15 minutes against a hosted Postgres, so live score changes are detected and notified without a manual trigger
 - [x] **7.6. Trade rumors & news (RSS)** — a second graph branch (`fetch_headlines → parse_headlines → classify_headlines → detect_new_headlines → persist_headlines`) pulls from ESPN, CBS Sports, ClutchPoints and Sportando, dedupes against the `headlines` table, and notifies on anything new; runs in parallel with the scoreboard branch, both converging before routing.
 - [x] **8. Classification & verification agents** — [`agents/classification.py`](src/agent_ia_veille_nba/agents/classification.py) tags each headline with a category (trade/injury/signing/general, keyword-based) and the teams it mentions (name/city matching), and scores credibility from static per-source reliability plus a same-cycle cross-source corroboration bonus. Explicitly a heuristic, not a fact-check — an LLM-based pass would replace this with something more precise.
-- [ ] **9. Routing agent + email digests** — urgency-based routing (Telegram instant vs. Resend email for urgent/digest), replacing the current "notify on everything new" behavior
+- [x] **9. Routing agent + email digests** — [`agents/routing.py`](src/agent_ia_veille_nba/agents/routing.py) sends high-confidence trade/injury headlines to Telegram instantly and batches everything else (signings, general news, lower-credibility items) into a single Resend email digest per cycle; game status transitions stay Telegram-only, since `NOTIFIABLE_TRANSITIONS` already means "worth an instant ping." One digest email per cycle rather than a true daily digest — batching across cycles would need a persistent queue and its own schedule, deferred until it's actually needed.
 - [ ] **10. Portfolio polish** — architecture diagram, v1.0 release
 
 This project is under active, incremental development — each step is designed to ship independently, tested, and documented.
@@ -124,6 +124,9 @@ Every push runs [`.github/workflows/tests.yml`](.github/workflows/tests.yml): li
 | `TELEGRAM_BOT_TOKEN`     | Secret   | From @BotFather                        |
 | `TELEGRAM_CHAT_ID`       | Secret   | From `scripts/get_telegram_chat_id.py` |
 | `BALLDONTLIE_API_KEY`    | Secret   | From balldontlie.io                    |
+| `RESEND_API_KEY`         | Secret   | From `resend.com/api-keys`             |
+| `DIGEST_EMAIL_TO`        | Secret   | Where digest emails are sent            |
+| `RESEND_FROM_EMAIL`      | Variable | Optional — only needed once a custom domain is verified with Resend |
 | `WATCHED_TEAMS`          | Variable | Optional, comma-separated tricodes (e.g. `BOS,NYK`) |
 
 Set secrets under **Settings → Secrets and variables → Actions → Secrets**, and `WATCHED_TEAMS` under the **Variables** tab of the same page. Any free-tier hosted Postgres works (Neon, Supabase, Railway, …) — run `alembic upgrade head` against it once (or let the workflow do it; it runs the migration on every cycle, which is idempotent).

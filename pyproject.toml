@@ -16,6 +16,7 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "python-telegram-bot>=22.8",
     "requests>=2.34.2",
+    "resend>=2.44.0",
     "sqlalchemy>=2.0.52",
     "tzdata>=2026.3",
     "uvicorn[standard]>=0.52.4",

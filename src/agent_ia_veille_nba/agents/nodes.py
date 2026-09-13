@@ -18,6 +18,7 @@ from agent_ia_veille_nba.agents.classification import (
     ClassifiedHeadline,
     classify_headlines,
 )
+from agent_ia_veille_nba.agents.routing import route_headlines
 from agent_ia_veille_nba.agents.state import GameChange, PipelineState
 from agent_ia_veille_nba.config import get_watched_teams
 from agent_ia_veille_nba.db.repository import (
@@ -35,6 +36,7 @@ from agent_ia_veille_nba.nba_data.scoreboard import (
     parse_scoreboard,
     today_in_nba_time,
 )
+from agent_ia_veille_nba.notifications.email import send_digest_email
 from agent_ia_veille_nba.notifications.telegram import (
     format_change_message,
     format_headline_message,
@@ -200,10 +202,18 @@ def notify_node(state: PipelineState) -> dict:
         message = format_change_message(change)
         logger.info("sending telegram notification: %s", message)
         send_telegram_message(message)
-    for headline in state.get("new_headlines", []):
+
+    routing = route_headlines(state.get("new_headlines", []))
+
+    for headline in routing.urgent:
         message = format_headline_message(headline)
         logger.info("sending telegram notification: %s", message)
         send_telegram_message(message)
+
+    if routing.digest:
+        logger.info("sending email digest: %d headline(s)", len(routing.digest))
+        send_digest_email(routing.digest)
+
     return {}
 
 
