@@ -1,0 +1,44 @@
+# Runs the detection pipeline on a schedule so live score changes are
+# actually detected and notified without a human triggering /run-cycle
+# by hand. Requires a Postgres instance reachable from GitHub's hosted
+# runners (the local docker-compose one only works for local dev) with
+# its connection string in the DATABASE_URL secret, plus the Telegram
+# and balldontlie.io secrets below.
+name: Scheduled pipeline run
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: scheduled-pipeline-run
+  cancel-in-progress: false
+
+jobs:
+  run-cycle:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+      WATCHED_TEAMS: ${{ vars.WATCHED_TEAMS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+
+      - name: Run one pipeline cycle
+        run: uv run agent-ia-veille-nba

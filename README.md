@@ -62,6 +62,7 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`) with auto-generated Swagger docs
 - [x] **6. Telegram notifications** — real send wired into `notify_node`, mocked in automated tests
 - [x] **7. Containerization & CI** — app Dockerized, tests run in GitHub Actions on every push; the live data source moved from `nba_api` to `balldontlie.io` after confirming Akamai blocks the former everywhere, hosted runners included
+- [x] **7.5. Scheduled pipeline** — [`scheduled-run.yml`](.github/workflows/scheduled-run.yml) runs a cycle every 15 minutes against a hosted Postgres, so live score changes are detected and notified without a manual trigger
 - [ ] **8. Portfolio polish** — architecture diagram, v1.0 release
 
 This project is under active, incremental development — each step is designed to ship independently, tested, and documented.
@@ -109,6 +110,20 @@ mypy src
 ## CI
 
 Every push runs [`.github/workflows/tests.yml`](.github/workflows/tests.yml): lint, format check, type check and the full test suite against a real Postgres service container.
+
+## Scheduled pipeline
+
+[`.github/workflows/scheduled-run.yml`](.github/workflows/scheduled-run.yml) runs one pipeline cycle every 15 minutes (`workflow_dispatch` also available for a manual run). It needs its own hosted Postgres reachable from GitHub's runners — the local `docker-compose` database is for dev only — plus these repo settings:
+
+| Name                  | Kind     | Purpose                              |
+|------------------------|----------|----------------------------------------|
+| `DATABASE_URL`          | Secret   | Connection string for the hosted Postgres |
+| `TELEGRAM_BOT_TOKEN`     | Secret   | From @BotFather                        |
+| `TELEGRAM_CHAT_ID`       | Secret   | From `scripts/get_telegram_chat_id.py` |
+| `BALLDONTLIE_API_KEY`    | Secret   | From balldontlie.io                    |
+| `WATCHED_TEAMS`          | Variable | Optional, comma-separated tricodes (e.g. `BOS,NYK`) |
+
+Set secrets under **Settings → Secrets and variables → Actions → Secrets**, and `WATCHED_TEAMS` under the **Variables** tab of the same page. Any free-tier hosted Postgres works (Neon, Supabase, Railway, …) — run `alembic upgrade head` against it once (or let the workflow do it; it runs the migration on every cycle, which is idempotent).
 
 ## Project structure
 
