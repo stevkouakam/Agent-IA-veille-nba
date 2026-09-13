@@ -151,6 +151,17 @@ def test_detect_new_headlines_ignores_a_headline_already_persisted(db_session):
     assert changes == []
 
 
+def test_detect_new_headlines_dedupes_within_the_same_batch(db_session):
+    # Two feeds can carry the same syndicated story with the same
+    # headline_id in the same cycle — persisting both would violate the
+    # unique constraint, so only the first should survive detection.
+    duplicate = make_classified_headline()
+
+    changes = detect_new_headlines(db_session, [duplicate, duplicate])
+
+    assert len(changes) == 1
+
+
 def test_persist_new_headlines_inserts_every_headline(db_session):
     persist_new_headlines(
         db_session,
@@ -277,3 +288,33 @@ def test_notify_node_sends_non_urgent_headline_via_digest_email(monkeypatch):
 
     assert len(digested) == 1
     assert digested[0] == [general]
+
+
+def test_notify_node_sends_digest_even_when_telegram_send_fails(monkeypatch):
+    # A failure sending the (unrelated) game-change Telegram message
+    # shouldn't stop the independent email digest from going out.
+    def failing_send(text):
+        raise RuntimeError("telegram is down")
+
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_telegram_message", failing_send
+    )
+    digested: list[list] = []
+    monkeypatch.setattr(
+        "agent_ia_veille_nba.agents.nodes.send_digest_email", digested.append
+    )
+
+    change = GameChange(
+        game_id="0022500602",
+        home_team="LAL",
+        away_team="MIA",
+        previous_status=GameStatus.SCHEDULED,
+        new_status=GameStatus.LIVE,
+        home_score=0,
+        away_score=0,
+    )
+    general = make_classified_headline(category=HeadlineCategory.GENERAL)
+
+    notify_node({"changes": [change], "new_headlines": [general]})
+
+    assert len(digested) == 1

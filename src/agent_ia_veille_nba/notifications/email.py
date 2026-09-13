@@ -6,6 +6,7 @@ in the digest (agents/routing.py), this module decides *how* to
 deliver it (message formatting, the Resend API call).
 """
 
+import html
 import os
 
 import resend
@@ -24,11 +25,15 @@ DEFAULT_FROM = "NBA Watch <onboarding@resend.dev>"
 
 
 def _format_row(h: ClassifiedHeadline) -> str:
-    teams = f" ({', '.join(h.teams)})" if h.teams else ""
+    # Titles and links come from external RSS feeds — escape before
+    # embedding in HTML so a stray `<`, `&`, or `"` in one can't break
+    # the markup or the href attribute.
+    title = html.escape(h.headline.title)
+    link = html.escape(h.headline.link, quote=True)
     return (
         f"<li><strong>[{h.headline.source}] {h.category.value.upper()}</strong>"
-        f"{teams} &mdash; {h.credibility_score:.0%} credibility<br>"
-        f'<a href="{h.headline.link}">{h.headline.title}</a></li>'
+        f"{h.teams_suffix()} &mdash; {h.credibility_score:.0%} credibility<br>"
+        f'<a href="{link}">{title}</a></li>'
     )
 
 
@@ -51,7 +56,10 @@ def send_digest_email(headlines: list[ClassifiedHeadline]) -> None:
 
     resend.Emails.send(
         {
-            "from": os.environ.get("RESEND_FROM_EMAIL", DEFAULT_FROM),
+            # `.get(key, default)` alone isn't enough: GitHub Actions sets
+            # this env var to "" (not absent) when the repo variable is
+            # left unset, which `.get` treats as present.
+            "from": os.environ.get("RESEND_FROM_EMAIL") or DEFAULT_FROM,
             "to": [to],
             "subject": subject,
             "html": html,

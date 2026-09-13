@@ -40,6 +40,25 @@ def test_format_digest_email_includes_teams_when_present():
     assert "BOS" in html and "LAL" in html
 
 
+def test_format_digest_email_escapes_html_in_title_and_link():
+    malicious = make_classified(
+        headline=HeadlineUpdate(
+            headline_id="x",
+            source="espn",
+            title='<script>alert("hi")</script>',
+            link='https://example.com/"><b>x</b>',
+            summary="",
+            published_at=None,
+        )
+    )
+
+    _, html = email_module.format_digest_email([malicious])
+
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+    assert '"><b>' not in html
+
+
 def test_send_digest_email_calls_resend_with_configured_recipient(monkeypatch):
     monkeypatch.setenv("RESEND_API_KEY", "fake-key")
     monkeypatch.setenv("DIGEST_EMAIL_TO", "you@example.com")
@@ -60,3 +79,26 @@ def test_send_digest_email_calls_resend_with_configured_recipient(monkeypatch):
     assert calls[0]["to"] == ["you@example.com"]
     assert calls[0]["from"] == email_module.DEFAULT_FROM
     assert "Rookie wins player of the week" in calls[0]["html"]
+
+
+def test_send_digest_email_falls_back_to_default_when_from_env_is_empty_string(
+    monkeypatch,
+):
+    # GitHub Actions sets this env var to "" (not absent) when the repo
+    # variable is left unset — the fallback must treat that as unset too.
+    monkeypatch.setenv("RESEND_API_KEY", "fake-key")
+    monkeypatch.setenv("DIGEST_EMAIL_TO", "you@example.com")
+    monkeypatch.setenv("RESEND_FROM_EMAIL", "")
+
+    calls = []
+
+    class FakeEmails:
+        @staticmethod
+        def send(params):
+            calls.append(params)
+
+    monkeypatch.setattr(email_module.resend, "Emails", FakeEmails)
+
+    email_module.send_digest_email([make_classified()])
+
+    assert calls[0]["from"] == email_module.DEFAULT_FROM

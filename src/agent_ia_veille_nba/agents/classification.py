@@ -33,6 +33,11 @@ class ClassifiedHeadline:
     teams: tuple[str, ...]
     credibility_score: float
 
+    def teams_suffix(self) -> str:
+        """' (BOS, LAL)', or '' when no team was identified — shared by
+        both notification channels so their formatting stays in sync."""
+        return f" ({', '.join(self.teams)})" if self.teams else ""
+
 
 # Editorial outlets with fact-checking standards score higher than
 # aggregator/rumor blogs. Static for now; a longer track record of

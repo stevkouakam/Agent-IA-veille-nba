@@ -1,7 +1,13 @@
 import datetime as dt
 from pathlib import Path
 
-from agent_ia_veille_nba.nba_data.headlines import parse_feeds
+import requests
+
+from agent_ia_veille_nba.nba_data.headlines import (
+    RSS_FEEDS,
+    fetch_all_feeds,
+    parse_feeds,
+)
 
 FIXTURE_PATH = (
     Path(__file__).resolve().parent.parent / "fixtures" / "headlines_sample.xml"
@@ -46,3 +52,22 @@ def test_parse_feeds_combines_multiple_sources():
 
     assert len(headlines) == 4
     assert {h.source for h in headlines} == {"source_a", "source_b"}
+
+
+# --- fetch_all_feeds -----------------------------------------------------
+
+
+def test_fetch_all_feeds_skips_a_failing_feed_but_keeps_the_rest(monkeypatch):
+    sources = list(RSS_FEEDS)
+
+    def fake_fetch(url: str) -> bytes:
+        if url == RSS_FEEDS[sources[0]]:
+            raise requests.RequestException("boom")
+        return b"<rss><channel></channel></rss>"
+
+    monkeypatch.setattr("agent_ia_veille_nba.nba_data.headlines.fetch_feed", fake_fetch)
+
+    raw = fetch_all_feeds()
+
+    assert sources[0] not in raw
+    assert set(raw) == set(sources[1:])

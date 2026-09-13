@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -61,14 +62,21 @@ def fetch_all_feeds() -> dict[str, bytes]:
     """Download every configured feed, keyed by source name.
 
     One feed failing (timeout, transient block, outage) shouldn't sink
-    the whole cycle — log and skip it, keep the rest.
+    the whole cycle — log and skip it, keep the rest. Fetched
+    concurrently: fully independent HTTP calls, and each already has a
+    15s timeout — running them sequentially would let one slow feed add
+    up to that same 15s to every other feed's worst case.
     """
     raw: dict[str, bytes] = {}
-    for source, url in RSS_FEEDS.items():
-        try:
-            raw[source] = fetch_feed(url)
-        except requests.RequestException:
-            logger.warning("failed to fetch %s feed", source, exc_info=True)
+    with ThreadPoolExecutor(max_workers=len(RSS_FEEDS)) as pool:
+        futures = {
+            source: pool.submit(fetch_feed, url) for source, url in RSS_FEEDS.items()
+        }
+        for source, future in futures.items():
+            try:
+                raw[source] = future.result()
+            except requests.RequestException:
+                logger.warning("failed to fetch %s feed", source, exc_info=True)
     return raw
 
 

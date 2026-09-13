@@ -38,9 +38,9 @@ def format_change_message(change: GameChange) -> str:
 
 def format_headline_message(classified: ClassifiedHeadline) -> str:
     headline = classified.headline
-    teams = f" ({', '.join(classified.teams)})" if classified.teams else ""
     return (
-        f"📰 [{headline.source}] {classified.category.value.upper()}{teams} "
+        f"📰 [{headline.source}] {classified.category.value.upper()}"
+        f"{classified.teams_suffix()} "
         f"· credibility {classified.credibility_score:.0%}\n"
         f"{headline.title}\n{headline.link}"
     )

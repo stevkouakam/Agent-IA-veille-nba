@@ -124,3 +124,18 @@ def test_classify_headlines_attaches_category_and_teams():
     assert result[0].category is HeadlineCategory.TRADE
     assert result[0].teams == ("BOS",)
     assert result[0].headline.headline_id == "abc123"
+
+
+# --- ClassifiedHeadline.teams_suffix ------------------------------------
+
+
+def test_teams_suffix_formats_multiple_teams():
+    result = classify_headlines(
+        [make_headline(title="Lakers host the Celtics tonight")]
+    )
+    assert result[0].teams_suffix() == " (BOS, LAL)"
+
+
+def test_teams_suffix_is_empty_when_no_team_identified():
+    result = classify_headlines([make_headline(title="League announces new rules")])
+    assert result[0].teams_suffix() == ""

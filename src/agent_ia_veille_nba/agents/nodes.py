@@ -150,12 +150,22 @@ def detect_new_headlines(
 ) -> list[ClassifiedHeadline]:
     """Which of these headlines haven't been seen in a previous cycle —
     the piece worth unit testing directly, same rationale as
-    `detect_changes`."""
-    return [
-        c
-        for c in headlines
-        if get_by_headline_id(session, c.headline.headline_id) is None
-    ]
+    `detect_changes`.
+
+    Also dedupes within this batch itself (by headline_id) — two feeds
+    can carry the same syndicated story with the same guid/link in the
+    same cycle, and persisting both would violate the table's unique
+    constraint on headline_id.
+    """
+    new = []
+    seen_ids: set[str] = set()
+    for c in headlines:
+        if c.headline.headline_id in seen_ids:
+            continue
+        if get_by_headline_id(session, c.headline.headline_id) is None:
+            new.append(c)
+            seen_ids.add(c.headline.headline_id)
+    return new
 
 
 def persist_new_headlines(
@@ -198,21 +208,39 @@ def join_branches_node(state: PipelineState) -> dict:
 
 
 def notify_node(state: PipelineState) -> dict:
+    # Each send below is wrapped individually: these are three
+    # independent channels/items, and one failing (bad token, a
+    # transient network error, a rate limit) shouldn't stop the
+    # others from going out.
     for change in state["changes"]:
         message = format_change_message(change)
         logger.info("sending telegram notification: %s", message)
-        send_telegram_message(message)
+        try:
+            send_telegram_message(message)
+        except Exception:
+            logger.exception(
+                "failed to send telegram notification for game %s", change.game_id
+            )
 
     routing = route_headlines(state.get("new_headlines", []))
 
     for headline in routing.urgent:
         message = format_headline_message(headline)
         logger.info("sending telegram notification: %s", message)
-        send_telegram_message(message)
+        try:
+            send_telegram_message(message)
+        except Exception:
+            logger.exception(
+                "failed to send telegram notification for headline %s",
+                headline.headline.headline_id,
+            )
 
     if routing.digest:
         logger.info("sending email digest: %d headline(s)", len(routing.digest))
-        send_digest_email(routing.digest)
+        try:
+            send_digest_email(routing.digest)
+        except Exception:
+            logger.exception("failed to send email digest")
 
     return {}
 
