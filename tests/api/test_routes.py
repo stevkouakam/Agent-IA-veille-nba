@@ -7,7 +7,8 @@ from fastapi.testclient import TestClient
 
 from agent_ia_veille_nba.api.app import create_app
 from agent_ia_veille_nba.api.dependencies import get_db
-from agent_ia_veille_nba.db.repository import upsert_game
+from agent_ia_veille_nba.db.repository import insert_headline, upsert_game
+from agent_ia_veille_nba.nba_data.headlines import HeadlineUpdate
 from agent_ia_veille_nba.nba_data.scoreboard import GameStatus, GameUpdate
 
 FIXTURE_PATH = (
@@ -87,11 +88,34 @@ def test_get_games_filters_out_other_dates(client, db_session):
     assert response.json() == []
 
 
+def test_get_headlines_returns_seeded_rows(client, db_session):
+    insert_headline(
+        db_session,
+        HeadlineUpdate(
+            headline_id="abc123",
+            source="espn",
+            title="Team A exploring trade for star guard",
+            link="https://example.com/nba/trade-rumor-1",
+            summary="Sources say discussions are in early stages.",
+            published_at=None,
+        ),
+    )
+    db_session.flush()
+
+    response = client.get("/headlines")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["title"] == "Team A exploring trade for star guard"
+
+
 def test_run_cycle_returns_detected_transitions(monkeypatch, seeded_previous_state):
     raw = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.fetch_scoreboard", lambda game_date: raw
     )
+    monkeypatch.setattr("agent_ia_veille_nba.agents.nodes.fetch_all_feeds", dict)
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.send_telegram_message", lambda text: None
     )
@@ -104,6 +128,7 @@ def test_run_cycle_returns_detected_transitions(monkeypatch, seeded_previous_sta
     body = response.json()
     assert body["updates_count"] == 3
     assert len(body["changes"]) == 1
+    assert body["new_headlines_count"] == 0
     change = body["changes"][0]
     assert change["game_id"] == LIVE_GAME_ID
     assert change["previous_status"] == "SCHEDULED"

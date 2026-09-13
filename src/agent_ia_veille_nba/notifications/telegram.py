@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from telegram import Bot
 
 from agent_ia_veille_nba.agents.state import GameChange
+from agent_ia_veille_nba.nba_data.headlines import HeadlineUpdate
 from agent_ia_veille_nba.nba_data.scoreboard import GameStatus
 
 # Load here rather than relying on some other module (e.g. db.session)
@@ -33,6 +34,10 @@ def format_change_message(change: GameChange) -> str:
         f"{change.away_team} @ {change.home_team}: "
         f"{change.new_status.name} ({change.away_score}-{change.home_score})"
     )
+
+
+def format_headline_message(headline: HeadlineUpdate) -> str:
+    return f"📰 [{headline.source}] {headline.title}\n{headline.link}"
 
 
 def send_telegram_message(text: str) -> None:

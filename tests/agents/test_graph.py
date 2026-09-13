@@ -25,6 +25,7 @@ def test_graph_detects_the_scheduled_to_live_transition(
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.fetch_scoreboard", lambda game_date: raw
     )
+    monkeypatch.setattr("agent_ia_veille_nba.agents.nodes.fetch_all_feeds", dict)
     monkeypatch.setattr(
         "agent_ia_veille_nba.agents.nodes.send_telegram_message", lambda text: None
     )

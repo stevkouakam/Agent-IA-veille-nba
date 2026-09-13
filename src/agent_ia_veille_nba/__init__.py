@@ -16,9 +16,14 @@ def main() -> None:
     final_state = build_graph().invoke({})
     updates = final_state.get("updates", [])
     changes = final_state.get("changes", [])
+    headlines = final_state.get("headlines", [])
+    new_headlines = final_state.get("new_headlines", [])
 
     logger.info(
-        "cycle complete: %d updates fetched, %d changes notified",
+        "cycle complete: %d game updates (%d changes notified), "
+        "%d headlines fetched (%d new, notified)",
         len(updates),
         len(changes),
+        len(headlines),
+        len(new_headlines),
     )

@@ -59,11 +59,14 @@ For the MVP, these roles are merged into a single LangGraph agent before being s
 - [x] **2. Live scoreboard fetch/parse** — fetch/parse module, unit-tested against a fixture; originally built on `nba_api` ([history](docs/nba_api_notes.md)), migrated to `balldontlie.io` in step 7 after confirming the former is Akamai-blocked from every network tested, including a residential one ([details](docs/balldontlie_setup.md))
 - [x] **3. Data model** — SQLAlchemy `games` table + Alembic migration, tested against a real Postgres (Docker)
 - [x] **4. Detection agent** — LangGraph state graph (fetch → parse → detect → persist → route), notification channel still a stub
-- [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`) with auto-generated Swagger docs
+- [x] **5. API layer** — FastAPI (`/health`, `/run-cycle`, `/games`, `/headlines`) with auto-generated Swagger docs
 - [x] **6. Telegram notifications** — real send wired into `notify_node`, mocked in automated tests
 - [x] **7. Containerization & CI** — app Dockerized, tests run in GitHub Actions on every push; the live data source moved from `nba_api` to `balldontlie.io` after confirming Akamai blocks the former everywhere, hosted runners included
 - [x] **7.5. Scheduled pipeline** — [`scheduled-run.yml`](.github/workflows/scheduled-run.yml) runs a cycle every 15 minutes against a hosted Postgres, so live score changes are detected and notified without a manual trigger
-- [ ] **8. Portfolio polish** — architecture diagram, v1.0 release
+- [x] **7.6. Trade rumors & news (RSS)** — a second graph branch (`fetch_headlines → parse_headlines → detect_new_headlines → persist_headlines`) pulls from ESPN, CBS Sports, ClutchPoints and Sportando, dedupes against the `headlines` table, and notifies on anything new; runs in parallel with the scoreboard branch, both converging before routing. New entries are all treated alike for now — separating "rumor" from "confirmed news" by content is the classification agent's job (next up), not this fetch step's.
+- [ ] **8. Classification & verification agents** — tag headlines by team/player/category, dedupe near-duplicates across sources, score rumor credibility
+- [ ] **9. Routing agent + email digests** — urgency-based routing (Telegram instant vs. Resend email for urgent/digest), replacing the current "notify on everything new" behavior
+- [ ] **10. Portfolio polish** — architecture diagram, v1.0 release
 
 This project is under active, incremental development — each step is designed to ship independently, tested, and documented.
 

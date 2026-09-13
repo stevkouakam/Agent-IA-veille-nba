@@ -15,7 +15,7 @@ import datetime as dt
 from pydantic import BaseModel
 
 from agent_ia_veille_nba.agents.state import GameChange
-from agent_ia_veille_nba.db.models import Game
+from agent_ia_veille_nba.db.models import Game, Headline
 
 
 class GameOut(BaseModel):
@@ -72,6 +72,27 @@ class GameChangeOut(BaseModel):
         )
 
 
+class HeadlineOut(BaseModel):
+    source: str
+    title: str
+    link: str
+    summary: str
+    published_at: dt.datetime | None
+    created_at: dt.datetime
+
+    @classmethod
+    def from_model(cls, headline: Headline) -> HeadlineOut:
+        return cls(
+            source=headline.source,
+            title=headline.title,
+            link=headline.link,
+            summary=headline.summary,
+            published_at=headline.published_at,
+            created_at=headline.created_at,
+        )
+
+
 class RunCycleOut(BaseModel):
     updates_count: int
     changes: list[GameChangeOut]
+    new_headlines_count: int

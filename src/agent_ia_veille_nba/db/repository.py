@@ -11,7 +11,8 @@ import datetime as dt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from agent_ia_veille_nba.db.models import Game
+from agent_ia_veille_nba.db.models import Game, Headline
+from agent_ia_veille_nba.nba_data.headlines import HeadlineUpdate
 from agent_ia_veille_nba.nba_data.scoreboard import GameUpdate
 
 
@@ -44,3 +45,27 @@ def upsert_game(session: Session, update: GameUpdate, game_date: dt.date) -> Gam
     game.game_clock = update.game_clock
 
     return game
+
+
+def get_by_headline_id(session: Session, headline_id: str) -> Headline | None:
+    return session.scalar(select(Headline).where(Headline.headline_id == headline_id))
+
+
+def list_headlines(session: Session) -> list[Headline]:
+    stmt = select(Headline).order_by(Headline.created_at.desc())
+    return list(session.scalars(stmt))
+
+
+def insert_headline(session: Session, update: HeadlineUpdate) -> Headline:
+    """Insert a new headline row. Caller is responsible for having
+    already checked it's actually new (see detect_new_headlines)."""
+    headline = Headline(
+        headline_id=update.headline_id,
+        source=update.source,
+        title=update.title,
+        link=update.link,
+        summary=update.summary,
+        published_at=update.published_at,
+    )
+    session.add(headline)
+    return headline

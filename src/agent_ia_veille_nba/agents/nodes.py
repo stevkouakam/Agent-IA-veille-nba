@@ -16,8 +16,18 @@ from sqlalchemy.orm import Session
 
 from agent_ia_veille_nba.agents.state import GameChange, PipelineState
 from agent_ia_veille_nba.config import get_watched_teams
-from agent_ia_veille_nba.db.repository import get_by_game_id, upsert_game
+from agent_ia_veille_nba.db.repository import (
+    get_by_game_id,
+    get_by_headline_id,
+    insert_headline,
+    upsert_game,
+)
 from agent_ia_veille_nba.db.session import get_session
+from agent_ia_veille_nba.nba_data.headlines import (
+    HeadlineUpdate,
+    fetch_all_feeds,
+    parse_feeds,
+)
 from agent_ia_veille_nba.nba_data.scoreboard import (
     GameStatus,
     GameUpdate,
@@ -27,6 +37,7 @@ from agent_ia_veille_nba.nba_data.scoreboard import (
 )
 from agent_ia_veille_nba.notifications.telegram import (
     format_change_message,
+    format_headline_message,
     send_telegram_message,
 )
 
@@ -110,14 +121,68 @@ def persist_node(state: PipelineState) -> dict:
     return {}
 
 
+def fetch_headlines_node(state: PipelineState) -> dict:
+    return {"raw_headlines": fetch_all_feeds()}
+
+
+def parse_headlines_node(state: PipelineState) -> dict:
+    return {"headlines": parse_feeds(state["raw_headlines"])}
+
+
+def detect_new_headlines(
+    session: Session, headlines: list[HeadlineUpdate]
+) -> list[HeadlineUpdate]:
+    """Which of these headlines haven't been seen in a previous cycle —
+    the piece worth unit testing directly, same rationale as
+    `detect_changes`."""
+    return [h for h in headlines if get_by_headline_id(session, h.headline_id) is None]
+
+
+def persist_new_headlines(session: Session, headlines: list[HeadlineUpdate]) -> None:
+    for headline in headlines:
+        insert_headline(session, headline)
+
+
+def detect_new_headlines_node(state: PipelineState) -> dict:
+    session = get_session()
+    try:
+        new_headlines = detect_new_headlines(session, state["headlines"])
+    finally:
+        session.close()
+    return {"new_headlines": new_headlines}
+
+
+def persist_headlines_node(state: PipelineState) -> dict:
+    session = get_session()
+    try:
+        persist_new_headlines(session, state["new_headlines"])
+        session.commit()
+    finally:
+        session.close()
+    return {}
+
+
+def join_branches_node(state: PipelineState) -> dict:
+    """No-op merge point where the scoreboard and headlines branches
+    (each fetch -> parse -> detect -> persist) converge before deciding
+    whether there's anything worth notifying about."""
+    return {}
+
+
 def notify_node(state: PipelineState) -> dict:
     for change in state["changes"]:
         message = format_change_message(change)
+        logger.info("sending telegram notification: %s", message)
+        send_telegram_message(message)
+    for headline in state.get("new_headlines", []):
+        message = format_headline_message(headline)
         logger.info("sending telegram notification: %s", message)
         send_telegram_message(message)
     return {}
 
 
 def has_changes(state: PipelineState) -> str:
-    """Routing function for the conditional edge after `persist`."""
-    return "notify" if state["changes"] else "end"
+    """Routing function for the conditional edge after `join_branches`."""
+    changes = state.get("changes", [])
+    new_headlines = state.get("new_headlines", [])
+    return "notify" if (changes or new_headlines) else "end"

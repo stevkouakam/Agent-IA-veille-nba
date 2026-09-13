@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Sample NBA Feed</title>
+  <link>https://example.com/nba</link>
+  <description>Fixture feed for headline parsing tests</description>
+  <item>
+    <title>Team A exploring trade for star guard</title>
+    <link>https://example.com/nba/trade-rumor-1</link>
+    <guid>https://example.com/nba/trade-rumor-1</guid>
+    <pubDate>Sat, 13 Sep 2026 14:30:00 GMT</pubDate>
+    <description>Sources say discussions are in early stages.</description>
+  </item>
+  <item>
+    <title>Player X ruled out for two weeks with ankle injury</title>
+    <link>https://example.com/nba/injury-update-1</link>
+    <guid>https://example.com/nba/injury-update-1</guid>
+    <pubDate>Sat, 13 Sep 2026 12:00:00 GMT</pubDate>
+    <description>The team announced the timeline after today's MRI.</description>
+  </item>
+</channel>
+</rss>
